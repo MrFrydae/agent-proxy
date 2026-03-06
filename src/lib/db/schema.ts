@@ -17,6 +17,11 @@ export const accounts = sqliteTable("accounts", {
   quotaLastCheckedAt: text("quota_last_checked_at"),
   rateLimitedUntil: text("rate_limited_until"),
   rateLimitStatus: text("rate_limit_status"),
+  // OAuth fields
+  authMethod: text("auth_method").notNull().default("api_key"), // "api_key" | "oauth"
+  refreshToken: text("refresh_token"), // AES-256-GCM encrypted
+  accessTokenExpiresAt: text("access_token_expires_at"),
+  oauthScopes: text("oauth_scopes"),
 });
 
 export const requestLogs = sqliteTable("request_logs", {

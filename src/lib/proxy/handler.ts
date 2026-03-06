@@ -182,7 +182,11 @@ async function makeUpstreamRequest(
 
   // Set auth headers per provider
   if (provider === "anthropic") {
-    headers.set("x-api-key", account.decryptedKey);
+    if (account.authMethod === "oauth") {
+      headers.set("Authorization", `Bearer ${account.decryptedKey}`);
+    } else {
+      headers.set("x-api-key", account.decryptedKey);
+    }
     if (!headers.has("anthropic-version")) {
       headers.set("anthropic-version", "2023-06-01");
     }

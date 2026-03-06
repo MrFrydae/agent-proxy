@@ -54,6 +54,22 @@ export function getDb() {
       CREATE INDEX IF NOT EXISTS idx_request_logs_account_id ON request_logs(account_id);
     `);
 
+    // Migrate: add OAuth columns if missing
+    const columns = sqlite.pragma("table_info(accounts)") as Array<{ name: string }>;
+    const colNames = new Set(columns.map((c) => c.name));
+    if (!colNames.has("auth_method")) {
+      sqlite.exec(`ALTER TABLE accounts ADD COLUMN auth_method TEXT NOT NULL DEFAULT 'api_key'`);
+    }
+    if (!colNames.has("refresh_token")) {
+      sqlite.exec(`ALTER TABLE accounts ADD COLUMN refresh_token TEXT`);
+    }
+    if (!colNames.has("access_token_expires_at")) {
+      sqlite.exec(`ALTER TABLE accounts ADD COLUMN access_token_expires_at TEXT`);
+    }
+    if (!colNames.has("oauth_scopes")) {
+      sqlite.exec(`ALTER TABLE accounts ADD COLUMN oauth_scopes TEXT`);
+    }
+
     _db = drizzle(sqlite, { schema });
   }
   return _db;

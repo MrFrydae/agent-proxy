@@ -12,6 +12,7 @@ export interface AccountWithKey {
   priority: number;
   quotaFiveHrPercent: number | null;
   quotaWeeklyPercent: number | null;
+  authMethod: string;
 }
 
 const RETRYABLE_STATUS_CODES = new Set([429, 402, 529, 500, 502, 503, 504]);
@@ -55,6 +56,7 @@ export function getOrderedAccounts(provider: Provider): AccountWithKey[] {
     priority: row.priority,
     quotaFiveHrPercent: row.quotaFiveHrPercent,
     quotaWeeklyPercent: row.quotaWeeklyPercent,
+    authMethod: row.authMethod ?? "api_key",
   }));
 }
 

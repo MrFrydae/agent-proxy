@@ -17,7 +17,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const updates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
 
   if (body.label !== undefined) updates.label = body.label;
-  if (body.apiKey !== undefined) updates.apiKey = encrypt(body.apiKey);
+  if (body.apiKey !== undefined) {
+    if (existing.authMethod === "oauth") {
+      return NextResponse.json({ error: "Cannot manually set API key on OAuth accounts" }, { status: 400 });
+    }
+    updates.apiKey = encrypt(body.apiKey);
+  }
   if (body.isActive !== undefined) updates.isActive = body.isActive ? 1 : 0;
   if (body.priority !== undefined) updates.priority = body.priority;
 

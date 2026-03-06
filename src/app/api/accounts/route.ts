@@ -11,9 +11,9 @@ export async function GET() {
   const rows = db.select().from(accounts).orderBy(accounts.provider, accounts.priority).all();
   const result: AccountPublic[] = rows.map((row) => {
     const decrypted = decrypt(row.apiKey);
+    const { apiKey, refreshToken, ...rest } = row;
     return {
-      ...row,
-      apiKey: undefined as never,
+      ...rest,
       apiKeyLast4: decrypted.slice(-4),
     };
   });

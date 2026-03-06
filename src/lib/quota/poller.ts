@@ -1,9 +1,10 @@
 import { getDb } from "@/lib/db";
 import { accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { decrypt } from "@/lib/crypto";
+import { decrypt, encrypt } from "@/lib/crypto";
 import { fetchAnthropicQuota } from "./anthropic";
 import { fetchOpenAIQuota } from "./openai";
+import { refreshAccessToken } from "@/lib/oauth/tokens";
 import type { Provider } from "@/types";
 
 const POLL_INTERVAL_MS = 75_000; // ~75 seconds (between 60-90)
@@ -51,6 +52,18 @@ async function pollAllAccounts() {
     if (backoff && Date.now() < backoff.nextTryAt) continue;
 
     try {
+      // Refresh OAuth token if expiring soon
+      if (account.authMethod === "oauth" && account.accessTokenExpiresAt) {
+        const expiresAt = new Date(account.accessTokenExpiresAt).getTime();
+        const bufferMs = 5 * 60 * 1000; // 5 minutes before expiry
+        if (Date.now() >= expiresAt - bufferMs) {
+          await refreshOAuthToken(account);
+          // Re-read the account to get the fresh token
+          const refreshed = db.select().from(accounts).where(eq(accounts.id, account.id)).get();
+          if (refreshed) Object.assign(account, refreshed);
+        }
+      }
+
       const apiKey = decrypt(account.apiKey);
       const quota = account.provider === "anthropic"
         ? await fetchAnthropicQuota(apiKey)
@@ -80,12 +93,45 @@ async function pollAllAccounts() {
   }
 }
 
+async function refreshOAuthToken(account: typeof accounts.$inferSelect): Promise<void> {
+  if (!account.refreshToken) throw new Error("No refresh token");
+  const decryptedRefresh = decrypt(account.refreshToken);
+  const provider = account.provider as "anthropic" | "openai";
+  const tokens = await refreshAccessToken(provider, decryptedRefresh);
+
+  const db = getDb();
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+
+  db.update(accounts)
+    .set({
+      apiKey: encrypt(tokens.access_token),
+      refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : account.refreshToken,
+      accessTokenExpiresAt: expiresAt,
+      updatedAt: now,
+    })
+    .where(eq(accounts.id, account.id))
+    .run();
+
+  console.log(`[quota-poller] Refreshed OAuth token for ${account.label}`);
+}
+
 export async function refreshSingleAccount(accountId: string): Promise<void> {
   const db = getDb();
   const account = db.select().from(accounts).where(eq(accounts.id, accountId)).get();
   if (!account) throw new Error("Account not found");
 
-  const apiKey = decrypt(account.apiKey);
+  // Refresh OAuth token if needed
+  if (account.authMethod === "oauth" && account.accessTokenExpiresAt) {
+    const expiresAt = new Date(account.accessTokenExpiresAt).getTime();
+    if (Date.now() >= expiresAt - 5 * 60 * 1000) {
+      await refreshOAuthToken(account);
+    }
+  }
+
+  const freshAccount = db.select().from(accounts).where(eq(accounts.id, accountId)).get();
+  if (!freshAccount) throw new Error("Account not found");
+  const apiKey = decrypt(freshAccount.apiKey);
   const quota = account.provider === "anthropic"
     ? await fetchAnthropicQuota(apiKey)
     : await fetchOpenAIQuota(apiKey);

@@ -70,13 +70,16 @@ export function AccountCard({ account, onUpdate, onDelete }: AccountCardProps) {
               <span className="font-medium">{account.label}</span>
               <Badge variant="outline">{account.provider}</Badge>
               <Badge variant="secondary">#{account.priority}</Badge>
+              {account.authMethod === "oauth" && (
+                <Badge variant="outline" className="text-blue-500 border-blue-500/30">OAuth</Badge>
+              )}
               {account.rateLimitStatus === "rate_limited" && (
                 <Badge variant="destructive">Rate Limited</Badge>
               )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">
-                ****{account.apiKeyLast4}
+                {account.authMethod === "oauth" ? "OAuth token" : `****${account.apiKeyLast4}`}
               </span>
               <Switch
                 checked={account.isActive === 1}

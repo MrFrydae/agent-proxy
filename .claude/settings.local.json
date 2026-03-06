@@ -4,7 +4,8 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npm install)",
-      "Bash(npx next build)"
+      "Bash(npx next build)",
+      "WebFetch(domain:api.github.com)"
     ]
   }
 }
