@@ -9,9 +9,9 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export async function POST(req: NextRequest) {
-  const { code, state } = await req.json();
+  const { code: rawCode, state } = await req.json();
 
-  if (!code || !state) {
+  if (!rawCode || !state) {
     return NextResponse.json({ error: "code and state are required" }, { status: 400 });
   }
 
@@ -21,12 +21,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Anthropic may return the code in "code#state" format.
+    // Split on # to extract just the authorization code.
+    const code = rawCode.includes("#") ? rawCode.split("#")[0] : rawCode;
+    const codeState = rawCode.includes("#") ? rawCode.split("#")[1] : state;
+
     const redirectUri = "https://console.anthropic.com/oauth/code/callback";
     const tokens = await exchangeCodeForTokens(
       pending.provider,
       code,
       pending.codeVerifier,
       redirectUri,
+      codeState,
     );
 
     const db = getDb();

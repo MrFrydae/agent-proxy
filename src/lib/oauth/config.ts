@@ -12,7 +12,7 @@ export function getOAuthConfig(provider: "anthropic" | "openai"): OAuthProviderC
     return {
       authUrl: "https://claude.ai/oauth/authorize",
       tokenUrl: "https://console.anthropic.com/v1/oauth/token",
-      clientId: process.env.ANTHROPIC_OAUTH_CLIENT_ID || "",
+      clientId: process.env.ANTHROPIC_OAUTH_CLIENT_ID || "9d1c250a-e61b-44d9-88ed-5944d1962f5e",
       scopes: ["org:create_api_key", "user:profile", "user:inference"],
       externalRedirect: true,
     };

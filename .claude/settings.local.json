@@ -5,7 +5,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npm install)",
       "Bash(npx next build)",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:docs.openclaw.ai)",
+      "Bash(find /Volumes/Vault/Projects/codex-flare/src -name \"package.json\" -exec cat {} ;)"
     ]
   }
 }

@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, KeyRound, LogIn } from "lucide-react";
+import { Plus, KeyRound, LogIn, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 type AuthTab = "api_key" | "oauth";
@@ -28,6 +28,7 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
   const [oauthState, setOauthState] = useState<string | null>(null);
   const [oauthCode, setOauthCode] = useState("");
   const [awaitingCode, setAwaitingCode] = useState(false);
+  const [authUrl, setAuthUrl] = useState<string | null>(null);
 
   const resetForm = () => {
     setLabel("");
@@ -35,6 +36,7 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
     setOauthState(null);
     setOauthCode("");
     setAwaitingCode(false);
+    setAuthUrl(null);
     setLoading(false);
   };
 
@@ -81,10 +83,10 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
       const data = await res.json();
 
       if (data.externalRedirect) {
-        // Anthropic: open popup, user will paste code back
+        // Anthropic: show link for user to open, then paste code back
         setOauthState(data.state);
+        setAuthUrl(data.authUrl);
         setAwaitingCode(true);
-        window.open(data.authUrl, "_blank", "width=600,height=700");
       } else {
         // OpenAI: full page redirect
         window.location.href = data.authUrl;
@@ -223,8 +225,19 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
           {/* Anthropic: paste code step */}
           {authTab === "oauth" && awaitingCode && (
             <form onSubmit={handleCodeExchange} className="space-y-3">
+              {authUrl && (
+                <a
+                  href={authUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  Open {providerLabel} Authorization
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
               <p className="text-xs text-muted-foreground">
-                Authorize in the popup window, then copy the code shown and paste it below.
+                Click the link above to authorize, then copy the code shown and paste it below.
               </p>
               <div className="space-y-2">
                 <Label>Authorization Code</Label>

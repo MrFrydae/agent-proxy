@@ -184,6 +184,10 @@ async function makeUpstreamRequest(
   if (provider === "anthropic") {
     if (account.authMethod === "oauth") {
       headers.set("Authorization", `Bearer ${account.decryptedKey}`);
+      // Anthropic requires this beta flag for OAuth token requests
+      const existing = headers.get("anthropic-beta");
+      const betaFlags = existing ? `${existing},oauth-2025-04-20` : "oauth-2025-04-20";
+      headers.set("anthropic-beta", betaFlags);
     } else {
       headers.set("x-api-key", account.decryptedKey);
     }

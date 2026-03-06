@@ -13,20 +13,30 @@ export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string,
   redirectUri: string,
+  state?: string,
 ): Promise<TokenResponse> {
   const config = getOAuthConfig(provider);
-  const body = new URLSearchParams({
+  const params: Record<string, string> = {
     grant_type: "authorization_code",
     code,
     code_verifier: codeVerifier,
     client_id: config.clientId,
     redirect_uri: redirectUri,
-  });
+  };
 
+  // Anthropic requires state in the token exchange body
+  if (provider === "anthropic" && state) {
+    params.state = state;
+  }
+
+  // Anthropic expects JSON; OpenAI expects form-encoded
+  const isJson = provider === "anthropic";
   const res = await fetch(config.tokenUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
+    headers: {
+      "Content-Type": isJson ? "application/json" : "application/x-www-form-urlencoded",
+    },
+    body: isJson ? JSON.stringify(params) : new URLSearchParams(params),
   });
 
   if (!res.ok) {
@@ -42,16 +52,20 @@ export async function refreshAccessToken(
   refreshToken: string,
 ): Promise<TokenResponse> {
   const config = getOAuthConfig(provider);
-  const body = new URLSearchParams({
+  const params: Record<string, string> = {
     grant_type: "refresh_token",
     refresh_token: refreshToken,
     client_id: config.clientId,
-  });
+  };
 
+  // Anthropic expects JSON; OpenAI expects form-encoded
+  const isJson = provider === "anthropic";
   const res = await fetch(config.tokenUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
+    headers: {
+      "Content-Type": isJson ? "application/json" : "application/x-www-form-urlencoded",
+    },
+    body: isJson ? JSON.stringify(params) : new URLSearchParams(params),
   });
 
   if (!res.ok) {
