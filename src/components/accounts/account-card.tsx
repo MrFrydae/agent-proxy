@@ -100,7 +100,7 @@ export function AccountCard({ account, onUpdate, onDelete }: AccountCardProps) {
                 </div>
                 <Progress
                   value={account.quotaFiveHrPercent ?? 0}
-                  className={`h-1.5 ${getBarColor(account.quotaFiveHrPercent)}`}
+                  className={`[--progress-height:10px] ${getBarColor(account.quotaFiveHrPercent)}`}
                 />
               </div>
               <div className="space-y-1">
@@ -115,7 +115,7 @@ export function AccountCard({ account, onUpdate, onDelete }: AccountCardProps) {
                 </div>
                 <Progress
                   value={account.quotaWeeklyPercent ?? 0}
-                  className={`h-1.5 ${getBarColor(account.quotaWeeklyPercent)}`}
+                  className={`[--progress-height:10px] ${getBarColor(account.quotaWeeklyPercent)}`}
                 />
               </div>
             </div>

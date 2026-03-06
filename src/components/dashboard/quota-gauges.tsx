@@ -91,7 +91,7 @@ export function QuotaGauges() {
                 </div>
                 <Progress
                   value={account.quotaFiveHrPercent ?? 0}
-                  className={`h-2 ${getBarColor(account.quotaFiveHrPercent)}`}
+                  className={`[--progress-height:10px] ${getBarColor(account.quotaFiveHrPercent)}`}
                 />
               </div>
               <div className="space-y-1">
@@ -106,7 +106,7 @@ export function QuotaGauges() {
                 </div>
                 <Progress
                   value={account.quotaWeeklyPercent ?? 0}
-                  className={`h-2 ${getBarColor(account.quotaWeeklyPercent)}`}
+                  className={`[--progress-height:10px] ${getBarColor(account.quotaWeeklyPercent)}`}
                 />
               </div>
             </div>
