@@ -1,0 +1,188 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  extends: [
+    "config:recommended",
+    ":semanticCommits",
+    ":automergePr",
+    ":automergeRequireAllStatusChecks",
+    "schedule:weekdays",
+    "group:allNonMajor"
+  ],
+
+  description: "Renovate config for Intern Hopper. Aggressive grouping to minimize CI cost (6 platforms × 3 browsers = 18 E2E jobs per PR).",
+
+  dependencyDashboardTitle: "Renovate Dashboard",
+
+  labels: ["dependencies"],
+
+  timezone: "America/New_York",
+  schedule: ["after 2am and before 6am on weekdays"],
+
+  rangeStrategy: "auto",
+
+  prHourlyLimit: 2,
+  prConcurrentLimit: 8,
+  minimumReleaseAge: "3 days",
+
+  separateMajorMinor: true,
+  separateMultipleMajor: true,
+
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 6am on monday"]
+  },
+
+  vulnerabilityAlerts: {
+    enabled: true,
+    labels: ["dependencies", "security"],
+    schedule: ["at any time"],
+    automerge: false
+  },
+
+  postUpdateOptions: ["npmDedupe"],
+
+  packageRules: [
+    //
+    // ── Dependency groups ──────────────────────────────────────────────
+    //
+
+    {
+      description: "Group React runtime packages (must stay in sync)",
+      groupName: "react",
+      matchPackageNames: [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom"
+      ]
+    },
+
+    {
+      description: "Group Next.js framework with its ESLint config (pinned together)",
+      groupName: "next.js",
+      matchPackageNames: [
+        "next",
+        "eslint-config-next"
+      ]
+    },
+
+    {
+      description: "Group all @dnd-kit packages (tightly coupled, must stay in sync)",
+      groupName: "dnd-kit",
+      matchPackagePatterns: ["^@dnd-kit/"]
+    },
+
+    {
+      description: "Group Drizzle ORM + migration toolkit",
+      groupName: "drizzle",
+      matchPackageNames: [
+        "drizzle-orm",
+        "drizzle-kit"
+      ]
+    },
+
+    {
+      description: "Group all ESLint ecosystem packages (peer dep coupling — review manually)",
+      groupName: "eslint ecosystem",
+      matchPackageNames: [
+        "eslint",
+        "@eslint/js",
+        "@typescript-eslint/eslint-plugin",
+        "@typescript-eslint/parser",
+        "@stylistic/eslint-plugin",
+        "eslint-config-prettier",
+        "eslint-plugin-react",
+        "eslint-plugin-react-hooks",
+        "eslint-plugin-react-refresh",
+        "eslint-plugin-regex",
+        "eslint-plugin-unused-imports",
+        "globals"
+      ],
+      automerge: false
+    },
+
+    {
+      description: "Group Tailwind CSS toolchain",
+      groupName: "tailwindcss",
+      matchPackageNames: [
+        "tailwindcss",
+        "@tailwindcss/postcss",
+        "tw-animate-css"
+      ]
+    },
+
+    {
+      description: "Group UI utility libraries",
+      groupName: "ui utilities",
+      matchPackageNames: [
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "lucide-react",
+        "sonner",
+        "recharts",
+        "@base-ui/react",
+        "shadcn"
+      ]
+    },
+
+    //
+    // ── Special handling ───────────────────────────────────────────────
+    //
+
+    {
+      description: "Isolate better-sqlite3 (native addon, platform-specific builds)",
+      groupName: "better-sqlite3",
+      matchPackageNames: [
+        "better-sqlite3",
+        "@types/better-sqlite3"
+      ],
+      automerge: false
+    },
+
+    {
+      description: "Playwright updates invalidate browser cache (~400MB) — review manually",
+      groupName: "playwright",
+      matchPackageNames: ["@playwright/test"],
+      automerge: false
+    },
+
+    {
+      description: "Constrain @types/node to major 20 (matches CI Node version)",
+      matchPackageNames: ["@types/node"],
+      allowedVersions: "^20"
+    },
+
+    //
+    // ── Automerge policy ──────────────────────────────────────────────
+    //
+
+    {
+      description: "Automerge minor/patch devDependencies (CI validates with full matrix)",
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["minor", "patch"],
+      automerge: true,
+      automergeType: "pr"
+    },
+
+    {
+      description: "Never automerge major updates — always require human review",
+      matchUpdateTypes: ["major"],
+      automerge: false
+    },
+
+    {
+      description: "Automerge type definition patches (type-only, low risk)",
+      groupName: "type definitions",
+      matchPackagePatterns: ["^@types/"],
+      excludePackageNames: [
+        "@types/react",
+        "@types/react-dom",
+        "@types/better-sqlite3"
+      ],
+      automerge: true,
+      automergeType: "pr"
+    }
+  ]
+}
