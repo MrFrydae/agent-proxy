@@ -28,11 +28,9 @@ function formatTimeUntil(isoDate: string | null): string {
   return `${mins}m`;
 }
 
-function getBarColor(percent: number | null): string {
-  if (percent === null) return "";
-  if (percent >= 90) return "[&>div]:bg-red-500";
-  if (percent >= 70) return "[&>div]:bg-yellow-500";
-  return "[&>div]:bg-green-500";
+function formatResetTime(isoDate: string | null): string {
+  if (!isoDate) return "No reset data available";
+  return `Resets ${new Date(isoDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} (local)`;
 }
 
 export function QuotaGauges() {
@@ -46,7 +44,7 @@ export function QuotaGauges() {
         .catch(() => {});
     };
     fetchQuota();
-    const interval = setInterval(fetchQuota, 30000);
+    const interval = setInterval(fetchQuota, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -61,7 +59,7 @@ export function QuotaGauges() {
       </CardHeader>
       <CardContent className="space-y-4">
         {accounts.map((account) => (
-          <div key={account.id} className="space-y-2">
+          <div key={account.id} className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{account.label}</span>
@@ -78,36 +76,34 @@ export function QuotaGauges() {
                   : "never"}
               </span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>5-hour</span>
-                  <span>
-                    {account.quotaFiveHrPercent?.toFixed(1) ?? "—"}%
-                    {account.quotaFiveHrResetsAt && (
-                      <span className="ml-1">resets in {formatTimeUntil(account.quotaFiveHrResetsAt)}</span>
-                    )}
-                  </span>
+                  <span>Usage (5-hour)</span>
+                  <span>{account.quotaFiveHrPercent?.toFixed(1) ?? "N/A"}%</span>
                 </div>
                 <Progress
                   value={account.quotaFiveHrPercent ?? 0}
-                  className={`[--progress-height:10px] ${getBarColor(account.quotaFiveHrPercent)}`}
+                  className="[--progress-height:6px]"
                 />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{account.quotaFiveHrResetsAt ? `${formatTimeUntil(account.quotaFiveHrResetsAt)} until refresh` : "Data unavailable"}</span>
+                  <span>{formatResetTime(account.quotaFiveHrResetsAt)}</span>
+                </div>
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Weekly</span>
-                  <span>
-                    {account.quotaWeeklyPercent?.toFixed(1) ?? "—"}%
-                    {account.quotaWeeklyResetsAt && (
-                      <span className="ml-1">resets in {formatTimeUntil(account.quotaWeeklyResetsAt)}</span>
-                    )}
-                  </span>
+                  <span>Usage (Weekly)</span>
+                  <span>{account.quotaWeeklyPercent?.toFixed(1) ?? "N/A"}%</span>
                 </div>
                 <Progress
                   value={account.quotaWeeklyPercent ?? 0}
-                  className={`[--progress-height:10px] ${getBarColor(account.quotaWeeklyPercent)}`}
+                  className="[--progress-height:6px]"
                 />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{account.quotaWeeklyResetsAt ? `${formatTimeUntil(account.quotaWeeklyResetsAt)} until refresh` : "Data unavailable"}</span>
+                  <span>{formatResetTime(account.quotaWeeklyResetsAt)}</span>
+                </div>
               </div>
             </div>
           </div>

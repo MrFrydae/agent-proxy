@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { AccountList } from "@/components/accounts/account-list";
+import { AccountForm } from "@/components/accounts/account-form";
 import { toast } from "sonner";
 
 function OAuthToast() {
@@ -25,14 +26,20 @@ function OAuthToast() {
 }
 
 export default function AccountsPage() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
   return (
     <div>
-      <Header title="Accounts" />
-      <div className="p-6">
+      <Header
+        title="Account Management"
+        subtitle="Manage your API accounts and settings"
+        action={<AccountForm onCreated={() => setRefreshKey((k) => k + 1)} />}
+      />
+      <div className="px-6">
         <Suspense>
           <OAuthToast />
         </Suspense>
-        <AccountList />
+        <AccountList refreshKey={refreshKey} />
       </div>
     </div>
   );

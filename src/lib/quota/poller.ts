@@ -7,8 +7,8 @@ import { fetchOpenAIQuota } from "./openai";
 import { refreshAccessToken } from "@/lib/oauth/tokens";
 import type { Provider } from "@/types";
 
-const POLL_INTERVAL_MS = 75_000; // ~75 seconds (between 60-90)
-const CACHE_FRESHNESS_MS = 90_000; // Skip if polled within 90s
+const POLL_INTERVAL_MS = 15_000; // 15 seconds
+const CACHE_FRESHNESS_MS = 15_000; // Skip if polled within 15s
 const MAX_BACKOFF_MS = 60 * 60 * 1000; // 1 hour
 const BASE_BACKOFF_MS = 5 * 60 * 1000; // 5 minutes
 

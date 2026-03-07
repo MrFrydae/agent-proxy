@@ -1,9 +1,15 @@
 "use client";
 
-export function Header({ title }: { title: string }) {
+import type { ReactNode } from "react";
+
+export function Header({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
   return (
-    <header className="border-b bg-card px-6 py-4">
-      <h2 className="text-xl font-semibold">{title}</h2>
+    <header className="flex items-start justify-between px-6 py-6 lg:px-8">
+      <div>
+        <h2 className="text-3xl font-bold gradient-text">{title}</h2>
+        {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
     </header>
   );
 }

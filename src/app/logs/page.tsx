@@ -32,7 +32,7 @@ export default function LogsPage() {
 
   return (
     <div>
-      <Header title="Request Logs" />
+      <Header title="Request Logs" subtitle="Monitor API requests and responses" />
       <div className="space-y-4 p-6">
         <LogFilters provider={provider} onProviderChange={(v) => { setProvider(v); setPage(1); }} />
         <LogTable logs={logs} page={page} total={total} limit={limit} onPageChange={setPage} />

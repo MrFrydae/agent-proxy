@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, KeyRound, LogIn, ExternalLink } from "lucide-react";
+import { Plus, KeyRound, LogIn, ExternalLink, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 type AuthTab = "api_key" | "oauth";
@@ -29,6 +29,7 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
   const [oauthCode, setOauthCode] = useState("");
   const [awaitingCode, setAwaitingCode] = useState(false);
   const [authUrl, setAuthUrl] = useState<string | null>(null);
+  const [codeVisible, setCodeVisible] = useState(false);
 
   const resetForm = () => {
     setLabel("");
@@ -37,6 +38,7 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
     setOauthCode("");
     setAwaitingCode(false);
     setAuthUrl(null);
+    setCodeVisible(false);
     setLoading(false);
   };
 
@@ -83,10 +85,12 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
       const data = await res.json();
 
       if (data.externalRedirect) {
-        // Anthropic: show link for user to open, then paste code back
+        // Anthropic: open auth URL directly and enter awaiting code state
         setOauthState(data.state);
         setAuthUrl(data.authUrl);
         setAwaitingCode(true);
+        setCodeVisible(false);
+        window.open(data.authUrl, "_blank", "noopener,noreferrer");
       } else {
         // OpenAI: full page redirect
         window.location.href = data.authUrl;
@@ -138,14 +142,17 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Provider</Label>
-            <select
-              value={provider}
-              onChange={(e) => { setProvider(e.target.value); setAwaitingCode(false); setOauthState(null); }}
-              className="flex w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-            >
-              <option value="anthropic">Anthropic (Claude)</option>
-              <option value="openai">OpenAI (Codex)</option>
-            </select>
+            <div className="relative">
+              <select
+                value={provider}
+                onChange={(e) => { setProvider(e.target.value); setAwaitingCode(false); setOauthState(null); }}
+                className="flex w-full appearance-none rounded-lg border border-input bg-transparent px-3 py-2 pr-8 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              >
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="openai">OpenAI (Codex)</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Label</Label>
@@ -204,12 +211,11 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
             </form>
           )}
 
-          {/* OAuth flow */}
+          {/* OAuth flow — initial state */}
           {authTab === "oauth" && !awaitingCode && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
                 Sign in with your {providerLabel} account to authorize access.
-                {provider === "anthropic" && " You'll be asked to paste a code after authorizing."}
               </p>
               <Button
                 type="button"
@@ -217,28 +223,35 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
                 disabled={loading || !label.trim()}
                 onClick={handleOAuthStart}
               >
-                {loading ? "Redirecting..." : `Sign in with ${providerLabel}`}
+                {loading ? (
+                  "Redirecting..."
+                ) : (
+                  <>
+                    Sign in with {providerLabel}
+                    <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                  </>
+                )}
               </Button>
             </div>
           )}
 
-          {/* Anthropic: paste code step */}
+          {/* Anthropic: paste code input */}
           {authTab === "oauth" && awaitingCode && (
             <form onSubmit={handleCodeExchange} className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Authorize in the new tab, then paste the code shown below.
+              </p>
               {authUrl && (
                 <a
                   href={authUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  Open {providerLabel} Authorization
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  Reopen authorization page
+                  <ExternalLink className="h-3 w-3" />
                 </a>
               )}
-              <p className="text-xs text-muted-foreground">
-                Click the link above to authorize, then copy the code shown and paste it below.
-              </p>
               <div className="space-y-2">
                 <Label>Authorization Code</Label>
                 <Input

@@ -17,11 +17,16 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card">
-      <div className="flex items-center gap-2 border-b px-6 py-4">
-        <Flame className="h-6 w-6 text-orange-500" />
-        <h1 className="text-lg font-bold">Codex Flare</h1>
+      <div className="flex items-center gap-3 border-b px-6 py-5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Flame className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold">Codex Flare</h1>
+          <p className="text-xs text-muted-foreground">API Proxy with Failover</p>
+        </div>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-1 p-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -29,10 +34,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent/10 hover:text-accent",
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -42,7 +47,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t px-6 py-3 text-xs text-muted-foreground">
-        API Proxy with Failover
+        v1.0.0
       </div>
     </aside>
   );

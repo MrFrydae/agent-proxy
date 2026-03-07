@@ -36,7 +36,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <Header title="Dashboard" />
+      <Header title="Dashboard" subtitle="Overview of your proxy activity and quotas" />
       <div className="space-y-6 p-6">
         <StatsCards
           totalRequests={usage?.stats.totalRequests ?? 0}

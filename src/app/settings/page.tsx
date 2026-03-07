@@ -38,7 +38,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <Header title="Settings" />
+      <Header title="Settings" subtitle="Configure your proxy endpoints and preferences" />
       <div className="space-y-6 p-6">
         <Card>
           <CardHeader>
@@ -74,7 +74,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Quota Polling</span>
-              <Badge variant="default">Every ~75s</Badge>
+              <Badge variant="default">Every ~15s</Badge>
             </div>
           </CardContent>
         </Card>
