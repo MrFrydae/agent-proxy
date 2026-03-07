@@ -238,7 +238,7 @@ jobs:
             ~/.cache/ms-playwright
             ~/Library/Caches/ms-playwright
             ~/AppData/Local/ms-playwright
-          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ matrix.browser }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright browser
         if: steps.pw-cache.outputs.cache-hit != 'true'
