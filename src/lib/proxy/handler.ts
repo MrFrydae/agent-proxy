@@ -49,6 +49,10 @@ export async function proxyRequest(
     }
   })();
 
+  // Capture request details for logging
+  const bodyText = new TextDecoder().decode(bodyForParsing);
+  const incomingHeadersJson = JSON.stringify(maskHeaders(incomingRequest.headers));
+
   let lastError: Response | null = null;
 
   for (let i = 0; i < orderedAccounts.length; i++) {
@@ -57,7 +61,7 @@ export async function proxyRequest(
     const startTime = Date.now();
 
     try {
-      const result = await makeUpstreamRequest(
+      const upstream = await makeUpstreamRequest(
         provider,
         upstreamPath,
         account,
@@ -66,36 +70,43 @@ export async function proxyRequest(
       );
 
       const latencyMs = Date.now() - startTime;
+      const details: LogDetails = {
+        requestBody: truncateBody(bodyText),
+        requestHeaders: incomingHeadersJson,
+        upstreamUrl: upstream.url,
+        proxyHeaders: JSON.stringify(maskHeaders(upstream.headers)),
+      };
 
       // Update rate limit info from headers
-      updateAccountFromHeaders(account.id, provider, result.headers, result.status);
+      updateAccountFromHeaders(account.id, provider, upstream.response.headers, upstream.response.status);
 
       // If retryable error and more accounts available, try next
-      if (isRetryableStatus(result.status) && i < orderedAccounts.length - 1) {
+      if (isRetryableStatus(upstream.response.status) && i < orderedAccounts.length - 1) {
         markAccountRateLimited(account.id, 300);
         logRequest(
           provider, account.id, incomingRequest.method, upstreamPath, model,
-          result.status, null, null, latencyMs, isFailover ? 1 : 0,
-          `Retryable error: ${result.status}`,
+          upstream.response.status, null, null, latencyMs, isFailover ? 1 : 0,
+          `Retryable error: ${upstream.response.status}`, details,
         );
-        lastError = result;
+        lastError = upstream.response;
         continue;
       }
 
-      if (isStreaming && result.ok && result.body) {
+      if (isStreaming && upstream.response.ok && upstream.response.body) {
         return handleStreamingResponse(
-          result, provider, account.id, incomingRequest.method,
-          upstreamPath, model, latencyMs, isFailover,
+          upstream.response, provider, account.id, incomingRequest.method,
+          upstreamPath, model, latencyMs, isFailover, details,
         );
       }
 
       // Non-streaming: read body for usage, log, and return
-      const responseBody = await result.arrayBuffer();
+      const responseBody = await upstream.response.arrayBuffer();
+      const responseText = new TextDecoder().decode(responseBody);
       let inputTokens: number | null = null;
       let outputTokens: number | null = null;
 
       try {
-        const parsed = JSON.parse(new TextDecoder().decode(responseBody));
+        const parsed = JSON.parse(responseText);
         if (provider === "anthropic" && parsed.usage) {
           inputTokens = parsed.usage.input_tokens ?? null;
           outputTokens = parsed.usage.output_tokens ?? null;
@@ -109,23 +120,25 @@ export async function proxyRequest(
         // Non-JSON response
       }
 
+      details.responseBody = truncateBody(responseText);
+
       logRequest(
         provider, account.id, incomingRequest.method, upstreamPath, model,
-        result.status, inputTokens, outputTokens, latencyMs,
-        isFailover ? 1 : 0, result.ok ? null : `Error: ${result.status}`,
+        upstream.response.status, inputTokens, outputTokens, latencyMs,
+        isFailover ? 1 : 0, upstream.response.ok ? null : `Error: ${upstream.response.status}`, details,
       );
 
       // Forward response with original headers
       const responseHeaders = new Headers();
-      result.headers.forEach((value, key) => {
-        // Skip hop-by-hop headers
-        if (!["transfer-encoding", "connection", "keep-alive"].includes(key.toLowerCase())) {
+      upstream.response.headers.forEach((value, key) => {
+        // Skip hop-by-hop and encoding headers (body is already decompressed by fetch)
+        if (!["transfer-encoding", "connection", "keep-alive", "content-encoding", "content-length"].includes(key.toLowerCase())) {
           responseHeaders.set(key, value);
         }
       });
 
       return new Response(responseBody, {
-        status: result.status,
+        status: upstream.response.status,
         headers: responseHeaders,
       });
     } catch (err) {
@@ -133,7 +146,10 @@ export async function proxyRequest(
       const errMsg = err instanceof Error ? err.message : "Unknown error";
       logRequest(
         provider, account.id, incomingRequest.method, upstreamPath, model,
-        0, null, null, latencyMs, isFailover ? 1 : 0, errMsg,
+        0, null, null, latencyMs, isFailover ? 1 : 0, errMsg, {
+          requestBody: truncateBody(bodyText),
+          requestHeaders: incomingHeadersJson,
+        },
       );
 
       if (i < orderedAccounts.length - 1) {
@@ -162,13 +178,19 @@ export async function proxyRequest(
   );
 }
 
-function makeUpstreamRequest(
+interface UpstreamResult {
+  response: Response;
+  url: string;
+  headers: Headers;
+}
+
+async function makeUpstreamRequest(
   provider: Provider,
   path: string,
   account: AccountWithKey,
   body: ArrayBuffer,
   incomingHeaders: Headers,
-): Promise<Response> {
+): Promise<UpstreamResult> {
   const url = `${UPSTREAM_URLS[provider]}${path}`;
   const headers = new Headers();
 
@@ -179,12 +201,15 @@ function makeUpstreamRequest(
       lower !== "host" &&
       lower !== "authorization" &&
       lower !== "x-api-key" &&
-      lower !== "connection" &&
+      lower !== "accept-encoding" &&
       !lower.startsWith("cf-")
     ) {
       headers.set(key, value);
     }
   });
+
+  // Ensure keep-alive for upstream connection
+  headers.set("connection", "keep-alive");
 
   // Set auth headers per provider
   if (provider === "anthropic") {
@@ -204,11 +229,13 @@ function makeUpstreamRequest(
     headers.set("Authorization", `Bearer ${account.decryptedKey}`);
   }
 
-  return fetch(url, {
+  const response = await fetch(url, {
     method: "POST",
     headers,
     body,
   });
+
+  return { response, url, headers };
 }
 
 function handleStreamingResponse(
@@ -220,6 +247,7 @@ function handleStreamingResponse(
   model: string | null,
   startLatency: number,
   isFailover: boolean,
+  details?: LogDetails,
 ): Response {
   const { readable, writable, getUsage } = createStreamingPassthrough(provider);
 
@@ -241,16 +269,17 @@ function handleStreamingResponse(
       startLatency,
       isFailover ? 1 : 0,
       null,
+      { ...details, responseBody: "[streaming response]" },
     );
   }).catch(() => {
     // Stream error, still log
-    logRequest(provider, accountId, method, path, model, upstreamResponse.status, null, null, startLatency, isFailover ? 1 : 0, "Stream error");
+    logRequest(provider, accountId, method, path, model, upstreamResponse.status, null, null, startLatency, isFailover ? 1 : 0, "Stream error", details);
   });
 
-  // Forward headers
+  // Forward headers (strip encoding headers since we don't forward accept-encoding)
   const responseHeaders = new Headers();
   upstreamResponse.headers.forEach((value, key) => {
-    if (!["transfer-encoding", "connection", "keep-alive"].includes(key.toLowerCase())) {
+    if (!["transfer-encoding", "connection", "keep-alive", "content-encoding", "content-length"].includes(key.toLowerCase())) {
       responseHeaders.set(key, value);
     }
   });
@@ -259,6 +288,14 @@ function handleStreamingResponse(
     status: upstreamResponse.status,
     headers: responseHeaders,
   });
+}
+
+interface LogDetails {
+  requestBody?: string | null;
+  requestHeaders?: string | null;
+  upstreamUrl?: string | null;
+  proxyHeaders?: string | null;
+  responseBody?: string | null;
 }
 
 function logRequest(
@@ -273,6 +310,7 @@ function logRequest(
   latencyMs: number,
   isFailover: number,
   errorMessage: string | null,
+  details?: LogDetails,
 ): void {
   try {
     const db = getDb();
@@ -290,6 +328,11 @@ function logRequest(
         latencyMs,
         isFailover,
         errorMessage,
+        requestBody: details?.requestBody ?? null,
+        requestHeaders: details?.requestHeaders ?? null,
+        upstreamUrl: details?.upstreamUrl ?? null,
+        proxyHeaders: details?.proxyHeaders ?? null,
+        responseBody: details?.responseBody ?? null,
         createdAt: new Date().toISOString(),
       })
       .run();
@@ -297,4 +340,25 @@ function logRequest(
     // Don't let logging failures break the proxy
     console.error("Failed to log request");
   }
+}
+
+/** Mask sensitive header values */
+function maskHeaders(headers: Headers): Record<string, string> {
+  const result: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    const lower = key.toLowerCase();
+    if (lower === "authorization" || lower === "x-api-key") {
+      result[key] = value.length > 12 ? `${value.slice(0, 8)}...${value.slice(-4)}` : "***";
+    } else {
+      result[key] = value;
+    }
+  });
+  return result;
+}
+
+/** Truncate body to avoid bloating the DB (max 32KB) */
+function truncateBody(body: string): string {
+  const maxLen = 32768;
+  if (body.length <= maxLen) return body;
+  return `${body.slice(0, maxLen)}\n... [truncated, ${body.length} bytes total]`;
 }

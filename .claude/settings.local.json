@@ -6,9 +6,8 @@
       "Bash(npm install)",
       "Bash(npx next build)",
       "WebFetch(domain:api.github.com)",
-      "WebFetch(domain:docs.openclaw.ai)",
-      "Bash(find /Volumes/Vault/Projects/intern-hopper/src -name \"package.json\" -exec cat {} ;)",
-      "Bash(npm run lint)"
+      "Bash(pnpm run lint)",
+      "Bash(pnpm exec tsc --noEmit)"
     ]
   }
 }

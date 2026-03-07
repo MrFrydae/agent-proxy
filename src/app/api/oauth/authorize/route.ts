@@ -31,14 +31,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   storePending(state, { provider, label, codeVerifier, createdAt: Date.now() });
 
   const baseUrl = req.nextUrl.origin;
-  const redirectUri = config.externalRedirect
-    ? "https://console.anthropic.com/oauth/code/callback"
-    : `${baseUrl}/api/oauth/callback`;
 
   let authUrl: string;
 
   if (provider === "anthropic") {
-    // Match better-ccflare: use URL + searchParams.set() for exact same encoding
+    const redirectUri = "https://console.anthropic.com/oauth/code/callback";
     const url = new URL(config.authUrl);
     url.searchParams.set("code", "true");
     url.searchParams.set("client_id", config.clientId);
@@ -50,16 +47,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     url.searchParams.set("state", state);
     authUrl = url.toString();
   } else {
-    const params = new URLSearchParams({
-      response_type: "code",
-      client_id: config.clientId,
-      redirect_uri: redirectUri,
-      scope: config.scopes.join(" "),
-      state,
-      code_challenge: codeChallenge,
-      code_challenge_method: "S256",
-    });
-    authUrl = `${config.authUrl}?${params}`;
+    // OpenAI/Codex: must match Codex CLI registered redirect path /auth/callback
+    const redirectUri = `${baseUrl}/auth/callback`;
+    const url = new URL(config.authUrl);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("client_id", config.clientId);
+    url.searchParams.set("redirect_uri", redirectUri);
+    url.searchParams.set("scope", config.scopes.join(" "));
+    url.searchParams.set("code_challenge", codeChallenge);
+    url.searchParams.set("code_challenge_method", "S256");
+    url.searchParams.set("state", state);
+    url.searchParams.set("id_token_add_organizations", "true");
+    url.searchParams.set("codex_cli_simplified_flow", "true");
+    url.searchParams.set("originator", "pi");
+    authUrl = url.toString();
   }
 
   return NextResponse.json({ authUrl, state, externalRedirect: config.externalRedirect });

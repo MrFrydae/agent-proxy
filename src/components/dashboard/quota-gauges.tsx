@@ -22,15 +22,45 @@ function formatTimeUntil(isoDate: string | null): string {
   if (!isoDate) return "—";
   const ms = new Date(isoDate).getTime() - Date.now();
   if (ms <= 0) return "now";
-  const mins = Math.floor(ms / 60000);
-  const hours = Math.floor(mins / 60);
-  if (hours > 0) return `${hours}h ${mins % 60}m`;
-  return `${mins}m`;
+  const totalMins = Math.floor(ms / 60000);
+  const days = Math.floor(totalMins / 1440);
+  const hours = Math.floor((totalMins % 1440) / 60);
+  const mins = totalMins % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}hr`);
+  if (mins > 0 || parts.length === 0) parts.push(`${mins}m`);
+  return parts.join(" ");
 }
 
 function formatResetTime(isoDate: string | null): string {
   if (!isoDate) return "No reset data available";
-  return `Resets ${new Date(isoDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} (local)`;
+  const date = new Date(isoDate);
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) {
+    return `Resets ${time} today`;
+  }
+  const month = date.toLocaleDateString([], { month: "long" });
+  const day = date.getDate();
+  const suffix = day === 1 || day === 21 || day === 31 ? "st"
+    : day === 2 || day === 22 ? "nd"
+    : day === 3 || day === 23 ? "rd"
+    : "th";
+  return `Resets ${time} on ${month} ${day}${suffix}`;
+}
+
+function formatWeeklyResetTime(isoDate: string | null): string {
+  if (!isoDate) return "No reset data available";
+  const date = new Date(isoDate);
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const month = date.toLocaleDateString([], { month: "long" });
+  const day = date.getDate();
+  const suffix = day === 1 || day === 21 || day === 31 ? "st"
+    : day === 2 || day === 22 ? "nd"
+    : day === 3 || day === 23 ? "rd"
+    : "th";
+  return `Resets ${time} on ${month} ${day}${suffix}`;
 }
 
 export function QuotaGauges(): React.JSX.Element | null {
@@ -80,7 +110,7 @@ export function QuotaGauges(): React.JSX.Element | null {
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Usage (5-hour)</span>
-                  <span>{account.quotaFiveHrPercent?.toFixed(1) ?? "N/A"}%</span>
+                  <span>{account.quotaFiveHrPercent != null ? Math.round(account.quotaFiveHrPercent) : "N/A"}%</span>
                 </div>
                 <Progress
                   value={account.quotaFiveHrPercent ?? 0}
@@ -94,7 +124,7 @@ export function QuotaGauges(): React.JSX.Element | null {
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Usage (Weekly)</span>
-                  <span>{account.quotaWeeklyPercent?.toFixed(1) ?? "N/A"}%</span>
+                  <span>{account.quotaWeeklyPercent != null ? Math.round(account.quotaWeeklyPercent) : "N/A"}%</span>
                 </div>
                 <Progress
                   value={account.quotaWeeklyPercent ?? 0}
@@ -102,7 +132,7 @@ export function QuotaGauges(): React.JSX.Element | null {
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{account.quotaWeeklyResetsAt ? `${formatTimeUntil(account.quotaWeeklyResetsAt)} until refresh` : "Data unavailable"}</span>
-                  <span>{formatResetTime(account.quotaWeeklyResetsAt)}</span>
+                  <span>{formatWeeklyResetTime(account.quotaWeeklyResetsAt)}</span>
                 </div>
               </div>
             </div>

@@ -6,68 +6,87 @@ import { fetchAnthropicQuota } from "./anthropic";
 import { fetchOpenAIQuota } from "./openai";
 import { refreshAccessToken } from "@/lib/oauth/tokens";
 
-const POLL_INTERVAL_MS = 15_000; // 15 seconds
-const CACHE_FRESHNESS_MS = 15_000; // Skip if polled within 15s
-const MAX_BACKOFF_MS = 60 * 60 * 1000; // 1 hour
-const BASE_BACKOFF_MS = 5 * 60 * 1000; // 5 minutes
+// ── Intervals ────────────────────────────────────────────────────────────────
+const QUOTA_POLL_MS = 15_000; // Quota refresh every 15s
+const OAUTH_REFRESH_MS = 60_000; // OAuth check every 60s
+const OAUTH_BUFFER_MS = 10 * 60_000; // Refresh tokens 10 min before expiry
+const CACHE_FRESHNESS_MS = 15_000; // Skip quota if polled within this window
+const MAX_BACKOFF_MS = 60 * 60_000; // 1 hour ceiling
+const BASE_BACKOFF_MS = 5 * 60_000; // 5 minute base
 
-// Track backoff per account
-const backoffMap = new Map<string, { attempts: number; nextTryAt: number }>();
-
-let pollerInterval: ReturnType<typeof setInterval> | null = null;
-
-export function startQuotaPoller(): void {
-  if (pollerInterval) return; // Already running
-  console.warn("[quota-poller] Starting background quota polling");
-  pollerInterval = setInterval(pollAllAccounts, POLL_INTERVAL_MS);
-  // Initial poll after short delay
-  setTimeout(pollAllAccounts, 5000);
+// ── Survive HMR / module re-evaluation via globalThis ────────────────────────
+interface PollerState {
+  quotaTimer: ReturnType<typeof setInterval> | null;
+  oauthTimer: ReturnType<typeof setInterval> | null;
+  backoff: Map<string, { attempts: number; nextTryAt: number }>;
 }
 
-export function stopQuotaPoller(): void {
-  if (pollerInterval) {
-    clearInterval(pollerInterval);
-    pollerInterval = null;
+const KEY = "__internHopperPoller" as const;
+
+function getState(): PollerState {
+  const gt = globalThis as unknown as Record<string, PollerState>;
+  if (!gt[KEY]) {
+    gt[KEY] = { quotaTimer: null, oauthTimer: null, backoff: new Map() };
+  }
+  return gt[KEY];
+}
+
+// ── Public API ───────────────────────────────────────────────────────────────
+
+export function startQuotaPoller(): void {
+  const state = getState();
+
+  if (!state.quotaTimer) {
+    console.warn("[poller] Starting quota polling every %ds", QUOTA_POLL_MS / 1000);
+    state.quotaTimer = setInterval(pollAllQuotas, QUOTA_POLL_MS);
+    setTimeout(pollAllQuotas, 3_000); // first run after 3 s
+  }
+
+  if (!state.oauthTimer) {
+    console.warn("[poller] Starting OAuth refresh loop every %ds", OAUTH_REFRESH_MS / 1000);
+    state.oauthTimer = setInterval(refreshAllOAuthTokens, OAUTH_REFRESH_MS);
+    setTimeout(refreshAllOAuthTokens, 5_000); // first run after 5 s
   }
 }
 
-async function pollAllAccounts(): Promise<void> {
-  const db = getDb();
-  const activeAccounts = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.isActive, 1))
-    .all();
+export function stopQuotaPoller(): void {
+  const state = getState();
+  if (state.quotaTimer) { clearInterval(state.quotaTimer); state.quotaTimer = null; }
+  if (state.oauthTimer) { clearInterval(state.oauthTimer); state.oauthTimer = null; }
+}
 
-  for (const account of activeAccounts) {
-    // Check cache freshness
-    if (account.quotaLastCheckedAt) {
-      const lastChecked = new Date(account.quotaLastCheckedAt).getTime();
+// ── Quota polling ────────────────────────────────────────────────────────────
+
+async function pollAllQuotas(): Promise<void> {
+  const state = getState();
+
+  let rows: (typeof accounts.$inferSelect)[];
+  try {
+    const db = getDb();
+    rows = db.select().from(accounts).where(eq(accounts.isActive, 1)).all();
+  } catch (err) {
+    console.error("[poller:quota] DB read failed:", err);
+    return;
+  }
+
+  for (const row of rows) {
+    // Skip if recently polled
+    if (row.quotaLastCheckedAt) {
+      const lastChecked = new Date(row.quotaLastCheckedAt).getTime();
       if (Date.now() - lastChecked < CACHE_FRESHNESS_MS) continue;
     }
 
-    // Check backoff
-    const backoff = backoffMap.get(account.id);
-    if (backoff && Date.now() < backoff.nextTryAt) continue;
+    // Skip if in backoff
+    const bo = state.backoff.get(row.id);
+    if (bo && Date.now() < bo.nextTryAt) continue;
 
     try {
-      // Refresh OAuth token if expiring soon
-      if (account.authMethod === "oauth" && account.accessTokenExpiresAt) {
-        const expiresAt = new Date(account.accessTokenExpiresAt).getTime();
-        const bufferMs = 5 * 60 * 1000; // 5 minutes before expiry
-        if (Date.now() >= expiresAt - bufferMs) {
-          await refreshOAuthToken(account);
-          // Re-read the account to get the fresh token
-          const refreshed = db.select().from(accounts).where(eq(accounts.id, account.id)).get();
-          if (refreshed) Object.assign(account, refreshed);
-        }
-      }
-
-      const apiKey = decrypt(account.apiKey);
-      const quota = account.provider === "anthropic"
+      const apiKey = decrypt(row.apiKey);
+      const quota = row.provider === "anthropic"
         ? await fetchAnthropicQuota(apiKey)
         : await fetchOpenAIQuota(apiKey);
 
+      const db = getDb();
       db.update(accounts)
         .set({
           quotaFiveHrPercent: quota.fiveHour.utilization,
@@ -77,17 +96,48 @@ async function pollAllAccounts(): Promise<void> {
           quotaLastCheckedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(accounts.id, account.id))
+        .where(eq(accounts.id, row.id))
         .run();
 
-      // Clear backoff on success
-      backoffMap.delete(account.id);
+      state.backoff.delete(row.id);
     } catch (err) {
-      console.error(`[quota-poller] Failed to poll ${account.label}:`, err);
-      const current = backoffMap.get(account.id);
-      const attempts = (current?.attempts ?? 0) + 1;
+      console.error(`[poller:quota] ${row.label}:`, err);
+      const prev = state.backoff.get(row.id);
+      const attempts = (prev?.attempts ?? 0) + 1;
       const delay = Math.min(BASE_BACKOFF_MS * Math.pow(2, attempts - 1), MAX_BACKOFF_MS);
-      backoffMap.set(account.id, { attempts, nextTryAt: Date.now() + delay });
+      state.backoff.set(row.id, { attempts, nextTryAt: Date.now() + delay });
+    }
+  }
+}
+
+// ── OAuth token refresh ──────────────────────────────────────────────────────
+
+async function refreshAllOAuthTokens(): Promise<void> {
+  let rows: (typeof accounts.$inferSelect)[];
+  try {
+    const db = getDb();
+    rows = db.select().from(accounts).where(eq(accounts.isActive, 1)).all();
+  } catch (err) {
+    console.error("[poller:oauth] DB read failed:", err);
+    return;
+  }
+
+  for (const row of rows) {
+    if (row.authMethod !== "oauth") continue;
+    if (!row.refreshToken) continue;
+
+    // Refresh if expires within the buffer window, or if no expiry is recorded
+    const expiresAt = row.accessTokenExpiresAt
+      ? new Date(row.accessTokenExpiresAt).getTime()
+      : 0;
+
+    if (expiresAt > Date.now() + OAUTH_BUFFER_MS) continue; // Still fresh
+
+    try {
+      await refreshOAuthToken(row);
+      console.warn("[poller:oauth] Refreshed token for %s", row.label);
+    } catch (err) {
+      console.error(`[poller:oauth] Failed to refresh ${row.label}:`, err);
     }
   }
 }
@@ -111,26 +161,29 @@ async function refreshOAuthToken(account: typeof accounts.$inferSelect): Promise
     })
     .where(eq(accounts.id, account.id))
     .run();
-
-  console.warn(`[quota-poller] Refreshed OAuth token for ${account.label}`);
 }
+
+// ── Single-account manual refresh (used by the refresh button) ───────────────
 
 export async function refreshSingleAccount(accountId: string): Promise<void> {
   const db = getDb();
-  const account = db.select().from(accounts).where(eq(accounts.id, accountId)).get();
+  let account = db.select().from(accounts).where(eq(accounts.id, accountId)).get();
   if (!account) throw new Error("Account not found");
 
   // Refresh OAuth token if needed
-  if (account.authMethod === "oauth" && account.accessTokenExpiresAt) {
-    const expiresAt = new Date(account.accessTokenExpiresAt).getTime();
-    if (Date.now() >= expiresAt - 5 * 60 * 1000) {
+  if (account.authMethod === "oauth" && account.refreshToken) {
+    const expiresAt = account.accessTokenExpiresAt
+      ? new Date(account.accessTokenExpiresAt).getTime()
+      : 0;
+    if (expiresAt <= Date.now() + OAUTH_BUFFER_MS) {
       await refreshOAuthToken(account);
+      const refreshed = db.select().from(accounts).where(eq(accounts.id, accountId)).get();
+      if (!refreshed) throw new Error("Account not found after refresh");
+      account = refreshed;
     }
   }
 
-  const freshAccount = db.select().from(accounts).where(eq(accounts.id, accountId)).get();
-  if (!freshAccount) throw new Error("Account not found");
-  const apiKey = decrypt(freshAccount.apiKey);
+  const apiKey = decrypt(account.apiKey);
   const quota = account.provider === "anthropic"
     ? await fetchAnthropicQuota(apiKey)
     : await fetchOpenAIQuota(apiKey);
@@ -147,5 +200,5 @@ export async function refreshSingleAccount(accountId: string): Promise<void> {
     .where(eq(accounts.id, accountId))
     .run();
 
-  backoffMap.delete(accountId);
+  getState().backoff.delete(accountId);
 }

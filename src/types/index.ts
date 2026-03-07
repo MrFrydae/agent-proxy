@@ -41,6 +41,11 @@ export interface RequestLog {
   latencyMs: number;
   isFailover: number;
   errorMessage: string | null;
+  requestBody: string | null;
+  requestHeaders: string | null;
+  upstreamUrl: string | null;
+  proxyHeaders: string | null;
+  responseBody: string | null;
   createdAt: string;
 }
 

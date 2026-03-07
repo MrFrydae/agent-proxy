@@ -37,5 +37,10 @@ export const requestLogs = sqliteTable("request_logs", {
   latencyMs: integer("latency_ms").notNull(),
   isFailover: integer("is_failover").notNull().default(0),
   errorMessage: text("error_message"),
+  requestBody: text("request_body"),
+  requestHeaders: text("request_headers"),
+  upstreamUrl: text("upstream_url"),
+  proxyHeaders: text("proxy_headers"),
+  responseBody: text("response_body"),
   createdAt: text("created_at").notNull(),
 });

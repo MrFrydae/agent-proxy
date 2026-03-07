@@ -4,12 +4,13 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, ScrollText, Settings, Flame } from "lucide-react";
+import { LayoutDashboard, Users, ScrollText, Rocket, Settings, Flame } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/accounts", label: "Accounts", icon: Users },
   { href: "/logs", label: "Logs", icon: ScrollText },
+  { href: "/launch", label: "Launch", icon: Rocket },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

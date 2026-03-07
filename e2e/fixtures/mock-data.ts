@@ -1,4 +1,4 @@
-import type { AccountPublic, RequestLog } from "../../src/types";
+import type { AccountPublic, RequestLog } from "@/types";
 
 export function createMockAccount(
   overrides: Partial<AccountPublic> = {}
@@ -42,6 +42,11 @@ export function createMockLog(
     latencyMs: 342,
     isFailover: 0,
     errorMessage: null,
+    requestBody: null,
+    requestHeaders: null,
+    upstreamUrl: null,
+    proxyHeaders: null,
+    responseBody: null,
     createdAt: new Date().toISOString(),
     ...overrides,
   };

@@ -2,6 +2,20 @@ import type { QuotaInfo } from "@/types";
 
 const CHATGPT_BASE_URL = process.env.CHATGPT_BASE_URL || "https://chatgpt.com";
 
+/**
+ * Fetch Codex/OpenAI quota from the ChatGPT wham/usage endpoint.
+ *
+ * Response shape (real):
+ * {
+ *   "rate_limit": {
+ *     "primary_window":   { "used_percent": 42.5, "reset_at": 1709712000 },
+ *     "secondary_window": { "used_percent": 18.3, "reset_at": 1710316800 }
+ *   }
+ * }
+ *
+ * - `used_percent` is 0-100
+ * - `reset_at` is epoch **seconds** (not milliseconds)
+ */
 export async function fetchOpenAIQuota(apiKey: string): Promise<QuotaInfo> {
   const res = await fetch(`${CHATGPT_BASE_URL}/backend-api/wham/usage`, {
     headers: {
@@ -16,19 +30,25 @@ export async function fetchOpenAIQuota(apiKey: string): Promise<QuotaInfo> {
 
   const data = await res.json();
 
-  // The response contains primary (5hr) and secondary (weekly) windows
-  // Adapt to our QuotaInfo shape
-  const primary = data.primary || data.five_hour || {};
-  const secondary = data.secondary || data.seven_day || {};
+  const primary = data?.rate_limit?.primary_window;
+  const secondary = data?.rate_limit?.secondary_window;
 
   return {
     fiveHour: {
-      utilization: primary.usedPercent ?? primary.utilization ?? 0,
-      resetsAt: primary.resetAt ?? primary.resets_at ?? null,
+      utilization: typeof primary?.used_percent === "number"
+        ? Math.max(0, Math.min(100, primary.used_percent))
+        : 0,
+      resetsAt: typeof primary?.reset_at === "number"
+        ? new Date(primary.reset_at * 1000).toISOString()
+        : null,
     },
     sevenDay: {
-      utilization: secondary.usedPercent ?? secondary.utilization ?? 0,
-      resetsAt: secondary.resetAt ?? secondary.resets_at ?? null,
+      utilization: typeof secondary?.used_percent === "number"
+        ? Math.max(0, Math.min(100, secondary.used_percent))
+        : 0,
+      resetsAt: typeof secondary?.reset_at === "number"
+        ? new Date(secondary.reset_at * 1000).toISOString()
+        : null,
     },
   };
 }

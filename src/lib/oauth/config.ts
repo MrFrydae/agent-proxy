@@ -21,7 +21,9 @@ export function getOAuthConfig(provider: "anthropic" | "openai"): OAuthProviderC
     authUrl: "https://auth.openai.com/oauth/authorize",
     tokenUrl: "https://auth.openai.com/oauth/token",
     clientId: process.env.OPENAI_OAUTH_CLIENT_ID || "app_EMoamEEZ73f0CkXaXp7hrann",
-    scopes: ["openid", "profile", "email", "offline_access"],
+    scopes: [
+      "openid", "profile", "email", "offline_access",
+    ],
     externalRedirect: false,
   };
 }
