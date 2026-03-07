@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { consumePending } from "@/lib/oauth/state-store";
 import { exchangeCodeForTokens } from "@/lib/oauth/tokens";
 import { getOAuthConfig } from "@/lib/oauth/config";
@@ -8,7 +9,7 @@ import { accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
 

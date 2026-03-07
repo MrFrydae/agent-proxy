@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 type AuthTab = "api_key" | "oauth";
 
-export function AccountForm({ onCreated }: { onCreated: () => void }) {
+export function AccountForm({ onCreated }: { onCreated: () => void }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [authTab, setAuthTab] = useState<AuthTab>("api_key");
   const [provider, setProvider] = useState<string>("anthropic");
@@ -29,9 +29,9 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
   const [oauthCode, setOauthCode] = useState("");
   const [awaitingCode, setAwaitingCode] = useState(false);
   const [authUrl, setAuthUrl] = useState<string | null>(null);
-  const [codeVisible, setCodeVisible] = useState(false);
+  const [_codeVisible, setCodeVisible] = useState(false);
 
-  const resetForm = () => {
+  const resetForm = (): void => {
     setLabel("");
     setApiKey("");
     setOauthState(null);
@@ -42,7 +42,7 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
     setLoading(false);
   };
 
-  const handleApiKeySubmit = async (e: React.FormEvent) => {
+  const handleApiKeySubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -66,7 +66,7 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
     }
   };
 
-  const handleOAuthStart = async () => {
+  const handleOAuthStart = async (): Promise<void> => {
     if (!label.trim()) {
       toast.error("Please enter a label first");
       return;
@@ -102,7 +102,7 @@ export function AccountForm({ onCreated }: { onCreated: () => void }) {
     }
   };
 
-  const handleCodeExchange = async (e: React.FormEvent) => {
+  const handleCodeExchange = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!oauthState || !oauthCode.trim()) return;
     setLoading(true);

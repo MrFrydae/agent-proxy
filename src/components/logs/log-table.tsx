@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   Table,
   TableBody,
@@ -20,7 +21,7 @@ interface LogTableProps {
   onPageChange: (page: number) => void;
 }
 
-export function LogTable({ logs, page, total, limit, onPageChange }: LogTableProps) {
+export function LogTable({ logs, page, total, limit, onPageChange }: LogTableProps): React.JSX.Element {
   const totalPages = Math.ceil(total / limit);
 
   return (

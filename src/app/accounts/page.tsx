@@ -1,13 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useCallback, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { AccountList } from "@/components/accounts/account-list";
 import { AccountForm } from "@/components/accounts/account-form";
 import { toast } from "sonner";
 
-function OAuthToast() {
+function OAuthToast(): null {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -25,7 +25,7 @@ function OAuthToast() {
   return null;
 }
 
-export default function AccountsPage() {
+export default function AccountsPage(): React.JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (

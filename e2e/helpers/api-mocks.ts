@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import {
   createMockAccount,
   createMockLog,
@@ -93,7 +93,7 @@ export async function setupApiMocks(page: Page, options: MockApiOptions = {}) {
     const url = new URL(request.url());
     const providerFilter = url.searchParams.get("provider");
     const filteredLogs = providerFilter
-      ? logs.filter((l) => l.provider === providerFilter)
+      ? logs.filter((log) => log.provider === providerFilter)
       : logs;
     await route.fulfill({
       json: {

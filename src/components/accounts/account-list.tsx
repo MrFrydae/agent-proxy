@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -43,7 +43,7 @@ function ProviderGroup({
   onUpdate: () => void;
   onDelete: () => void;
   sensors: ReturnType<typeof useSensors>;
-}) {
+}): React.JSX.Element {
   const showReorderButton = groupAccounts.length >= 2;
 
   return (
@@ -99,7 +99,7 @@ function ProviderGroup({
   );
 }
 
-export function AccountList({ refreshKey }: { refreshKey?: number }) {
+export function AccountList({ refreshKey }: { refreshKey?: number }): React.JSX.Element {
   const [accounts, setAccounts] = useState<AccountPublic[]>([]);
   const [reorderMode, setReorderMode] = useState<Record<string, boolean>>({});
 

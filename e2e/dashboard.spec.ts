@@ -1,5 +1,4 @@
 import { test, expect } from "./fixtures/test-fixtures";
-import { createMockLog } from "./fixtures/mock-data";
 
 test.describe("Dashboard Page", () => {
   test("displays correct header", async ({ page, mockApi }) => {

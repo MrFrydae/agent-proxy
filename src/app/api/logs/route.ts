@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { requestLogs } from "@/lib/db/schema";
 import { desc, eq, and, gte, lte, sql } from "drizzle-orm";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const db = getDb();
   const url = new URL(req.url);
   const page = parseInt(url.searchParams.get("page") || "1");

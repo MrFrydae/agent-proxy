@@ -38,8 +38,8 @@ export function updateAccountFromHeaders(
   accountId: string,
   provider: "anthropic" | "openai",
   responseHeaders: Headers,
-  statusCode: number
-) {
+  statusCode: number,
+): void {
   const info = provider === "anthropic"
     ? parseAnthropicHeaders(responseHeaders)
     : parseOpenAIHeaders(responseHeaders);

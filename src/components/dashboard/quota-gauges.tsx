@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface QuotaAccount {
   id: string;
@@ -33,11 +33,11 @@ function formatResetTime(isoDate: string | null): string {
   return `Resets ${new Date(isoDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} (local)`;
 }
 
-export function QuotaGauges() {
+export function QuotaGauges(): React.JSX.Element | null {
   const [accounts, setAccounts] = useState<QuotaAccount[]>([]);
 
   useEffect(() => {
-    const fetchQuota = () => {
+    const fetchQuota = (): void => {
       fetch("/api/quota")
         .then((r) => r.json())
         .then(setAccounts)

@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures/test-fixtures";
 
 test.describe("Accessibility", () => {
-  test.beforeEach(async ({ page, mockApi }) => {
+  test.beforeEach(async ({ mockApi }) => {
     await mockApi();
   });
 

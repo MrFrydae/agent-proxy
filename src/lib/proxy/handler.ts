@@ -12,12 +12,6 @@ const UPSTREAM_URLS: Record<Provider, string> = {
   openai: "https://api.openai.com",
 };
 
-interface ProxyResult {
-  response: Response;
-  accountUsed: string;
-  isFailover: boolean;
-}
-
 export async function proxyRequest(
   provider: Provider,
   upstreamPath: string,
@@ -28,7 +22,7 @@ export async function proxyRequest(
 
   if (orderedAccounts.length === 0) {
     return new Response(
-      JSON.stringify({ error: { type: "proxy_error", message: "No active accounts available for " + provider } }),
+      JSON.stringify({ error: { type: "proxy_error", message: `No active accounts available for ${provider}` } }),
       { status: 503, headers: { "content-type": "application/json" } },
     );
   }
@@ -69,7 +63,6 @@ export async function proxyRequest(
         account,
         bodyBytes,
         incomingRequest.headers,
-        isStreaming,
       );
 
       const latencyMs = Date.now() - startTime;
@@ -80,13 +73,20 @@ export async function proxyRequest(
       // If retryable error and more accounts available, try next
       if (isRetryableStatus(result.status) && i < orderedAccounts.length - 1) {
         markAccountRateLimited(account.id, 300);
-        logRequest(provider, account.id, incomingRequest.method, upstreamPath, model, result.status, null, null, latencyMs, isFailover ? 1 : 0, `Retryable error: ${result.status}`);
+        logRequest(
+          provider, account.id, incomingRequest.method, upstreamPath, model,
+          result.status, null, null, latencyMs, isFailover ? 1 : 0,
+          `Retryable error: ${result.status}`,
+        );
         lastError = result;
         continue;
       }
 
       if (isStreaming && result.ok && result.body) {
-        return handleStreamingResponse(result, provider, account.id, incomingRequest.method, upstreamPath, model, latencyMs, isFailover);
+        return handleStreamingResponse(
+          result, provider, account.id, incomingRequest.method,
+          upstreamPath, model, latencyMs, isFailover,
+        );
       }
 
       // Non-streaming: read body for usage, log, and return
@@ -109,7 +109,11 @@ export async function proxyRequest(
         // Non-JSON response
       }
 
-      logRequest(provider, account.id, incomingRequest.method, upstreamPath, model, result.status, inputTokens, outputTokens, latencyMs, isFailover ? 1 : 0, result.ok ? null : "Error: " + result.status);
+      logRequest(
+        provider, account.id, incomingRequest.method, upstreamPath, model,
+        result.status, inputTokens, outputTokens, latencyMs,
+        isFailover ? 1 : 0, result.ok ? null : `Error: ${result.status}`,
+      );
 
       // Forward response with original headers
       const responseHeaders = new Headers();
@@ -127,14 +131,17 @@ export async function proxyRequest(
     } catch (err) {
       const latencyMs = Date.now() - startTime;
       const errMsg = err instanceof Error ? err.message : "Unknown error";
-      logRequest(provider, account.id, incomingRequest.method, upstreamPath, model, 0, null, null, latencyMs, isFailover ? 1 : 0, errMsg);
+      logRequest(
+        provider, account.id, incomingRequest.method, upstreamPath, model,
+        0, null, null, latencyMs, isFailover ? 1 : 0, errMsg,
+      );
 
       if (i < orderedAccounts.length - 1) {
         continue; // Try next account
       }
 
       return new Response(
-        JSON.stringify({ error: { type: "proxy_error", message: "All accounts failed. Last error: " + errMsg } }),
+        JSON.stringify({ error: { type: "proxy_error", message: `All accounts failed. Last error: ${errMsg}` } }),
         { status: 503, headers: { "content-type": "application/json" } },
       );
     }
@@ -155,13 +162,12 @@ export async function proxyRequest(
   );
 }
 
-async function makeUpstreamRequest(
+function makeUpstreamRequest(
   provider: Provider,
   path: string,
   account: AccountWithKey,
   body: ArrayBuffer,
   incomingHeaders: Headers,
-  _isStreaming: boolean,
 ): Promise<Response> {
   const url = `${UPSTREAM_URLS[provider]}${path}`;
   const headers = new Headers();
@@ -218,6 +224,7 @@ function handleStreamingResponse(
   const { readable, writable, getUsage } = createStreamingPassthrough(provider);
 
   // Pipe upstream to transform stream, log when done
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- caller verifies body exists
   const upstreamBody = upstreamResponse.body!;
   upstreamBody.pipeTo(writable).then(() => {
     const usage = getUsage();
@@ -266,7 +273,7 @@ function logRequest(
   latencyMs: number,
   isFailover: number,
   errorMessage: string | null,
-) {
+): void {
   try {
     const db = getDb();
     db.insert(requestLogs)

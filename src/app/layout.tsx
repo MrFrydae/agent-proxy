@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import "@fontsource-variable/mona-sans";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -13,7 +14,7 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>): React.JSX.Element {
   return (
     <html lang="en" className="dark">
       <body className="antialiased">

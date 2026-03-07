@@ -2,7 +2,7 @@ import { test, expect } from "./fixtures/test-fixtures";
 import { createMockLog } from "./fixtures/mock-data";
 
 test.describe("Logs Page", () => {
-  test.beforeEach(async ({ page, mockApi }) => {
+  test.beforeEach(async ({ mockApi }) => {
     await mockApi();
   });
 

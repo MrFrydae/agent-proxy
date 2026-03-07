@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Switch as SwitchPrimitive } from "@base-ui/react/switch"
 
 import { cn } from "@/lib/utils"
@@ -10,7 +11,7 @@ function Switch({
   ...props
 }: SwitchPrimitive.Root.Props & {
   size?: "sm" | "default"
-}) {
+}): React.JSX.Element {
   return (
     <SwitchPrimitive.Root
       data-slot="switch"

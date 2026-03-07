@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
 import { cn } from "@/lib/utils"
@@ -7,7 +8,7 @@ import { cn } from "@/lib/utils"
 function TooltipProvider({
   delay = 0,
   ...props
-}: TooltipPrimitive.Provider.Props) {
+}: TooltipPrimitive.Provider.Props): React.JSX.Element {
   return (
     <TooltipPrimitive.Provider
       data-slot="tooltip-provider"
@@ -17,11 +18,11 @@ function TooltipProvider({
   )
 }
 
-function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
+function Tooltip({ ...props }: TooltipPrimitive.Root.Props): React.JSX.Element {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
+function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props): React.JSX.Element {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
@@ -37,7 +38,7 @@ function TooltipContent({
   Pick<
     TooltipPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+  >): React.JSX.Element {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Positioner

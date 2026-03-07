@@ -71,24 +71,24 @@ export function createStreamingPassthrough(provider: "anthropic" | "openai"): {
   };
 }
 
-function parseAnthropicEvent(event: Record<string, unknown>, usage: StreamUsage) {
+function parseAnthropicEvent(event: Record<string, unknown>, usage: StreamUsage): void {
   if (event.type === "message_start") {
     const message = event.message as Record<string, unknown> | undefined;
     if (message?.model) usage.model = message.model as string;
-    const u = message?.usage as Record<string, number> | undefined;
-    if (u?.input_tokens) usage.inputTokens = u.input_tokens;
+    const mu = message?.usage as Record<string, number> | undefined;
+    if (mu?.input_tokens) usage.inputTokens = mu.input_tokens;
   }
   if (event.type === "message_delta") {
-    const u = event.usage as Record<string, number> | undefined;
-    if (u?.output_tokens) usage.outputTokens = u.output_tokens;
+    const du = event.usage as Record<string, number> | undefined;
+    if (du?.output_tokens) usage.outputTokens = du.output_tokens;
   }
 }
 
-function parseOpenAIEvent(event: Record<string, unknown>, usage: StreamUsage) {
+function parseOpenAIEvent(event: Record<string, unknown>, usage: StreamUsage): void {
   if (event.model) usage.model = event.model as string;
-  const u = event.usage as Record<string, number> | undefined;
-  if (u) {
-    if (u.prompt_tokens) usage.inputTokens = u.prompt_tokens;
-    if (u.completion_tokens) usage.outputTokens = u.completion_tokens;
+  const ou = event.usage as Record<string, number> | undefined;
+  if (ou) {
+    if (ou.prompt_tokens) usage.inputTokens = ou.prompt_tokens;
+    if (ou.completion_tokens) usage.outputTokens = ou.completion_tokens;
   }
 }

@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import { accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   const db = getDb();
   const rows = db
     .select({

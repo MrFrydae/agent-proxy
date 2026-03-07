@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Users, AlertTriangle, XCircle } from "lucide-react";
 
@@ -10,7 +11,9 @@ interface StatsCardsProps {
   errorRate: number;
 }
 
-export function StatsCards({ totalRequests, activeAccounts, failoverEvents, errorRate }: StatsCardsProps) {
+export function StatsCards({
+  totalRequests, activeAccounts, failoverEvents, errorRate,
+}: StatsCardsProps): React.JSX.Element {
   const cards = [
     { title: "Requests Today", value: totalRequests.toLocaleString(), icon: Activity, color: "text-blue-500" },
     { title: "Active Accounts", value: activeAccounts.toString(), icon: Users, color: "text-green-500" },

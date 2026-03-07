@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -47,7 +48,7 @@ function Button({
   variant = "default",
   size = "default",
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>): React.JSX.Element {
   return (
     <ButtonPrimitive
       data-slot="button"
@@ -57,4 +58,4 @@ function Button({
   )
 }
 
-export { Button, buttonVariants }
+export { Button }

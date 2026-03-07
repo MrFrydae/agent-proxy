@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/layout/header";
 import { LogTable } from "@/components/logs/log-table";
 import { LogFilters } from "@/components/logs/log-filters";
 import type { RequestLog } from "@/types";
 
-export default function LogsPage() {
+export default function LogsPage(): React.JSX.Element {
   const [logs, setLogs] = useState<RequestLog[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);

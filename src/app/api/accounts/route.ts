@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { accounts } from "@/lib/db/schema";
 import { encrypt, decrypt } from "@/lib/crypto";
@@ -6,12 +7,12 @@ import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 import type { AccountPublic } from "@/types";
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   const db = getDb();
   const rows = db.select().from(accounts).orderBy(accounts.provider, accounts.priority).all();
   const result: AccountPublic[] = rows.map((row) => {
     const decrypted = decrypt(row.apiKey);
-    const { apiKey, refreshToken, ...rest } = row;
+    const { apiKey: _apiKey, refreshToken: _refreshToken, ...rest } = row;
     return {
       ...rest,
       apiKeyLast4: decrypted.slice(-4),
@@ -20,7 +21,7 @@ export async function GET() {
   return NextResponse.json(result);
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = await req.json();
   const { provider, label, apiKey } = body;
 

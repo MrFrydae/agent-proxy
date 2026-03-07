@@ -1,11 +1,13 @@
 "use client";
 
+import React from "react";
+
 interface LogFiltersProps {
   provider: string;
   onProviderChange: (v: string) => void;
 }
 
-export function LogFilters({ provider, onProviderChange }: LogFiltersProps) {
+export function LogFilters({ provider, onProviderChange }: LogFiltersProps): React.JSX.Element {
   return (
     <div className="flex gap-3">
       <select

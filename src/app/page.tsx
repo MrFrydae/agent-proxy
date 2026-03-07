@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { QuotaGauges } from "@/components/dashboard/quota-gauges";
@@ -13,12 +13,12 @@ interface UsageResponse {
   dailyStats: { date: string; count: number; tokens: number }[];
 }
 
-export default function DashboardPage() {
+export default function DashboardPage(): React.JSX.Element {
   const [usage, setUsage] = useState<UsageResponse | null>(null);
   const [recentLogs, setRecentLogs] = useState<RequestLog[]>([]);
 
   useEffect(() => {
-    const fetchData = () => {
+    const fetchData = (): void => {
       fetch("/api/usage?days=7")
         .then((r) => r.json())
         .then(setUsage)

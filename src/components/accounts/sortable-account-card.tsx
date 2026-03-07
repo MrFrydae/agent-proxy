@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AccountCard } from "./account-card";
@@ -19,7 +20,7 @@ export function SortableAccountCard({
   onDelete,
   isReordering,
   isFirst,
-}: SortableAccountCardProps) {
+}: SortableAccountCardProps): React.JSX.Element {
   const {
     attributes,
     listeners,

@@ -29,4 +29,5 @@ db.insert(accounts)
   })
   .run();
 
+// eslint-disable-next-line no-console -- CLI script output
 console.log(`Inserted dummy account "${id}" with priority ${maxPriority + 1}`);

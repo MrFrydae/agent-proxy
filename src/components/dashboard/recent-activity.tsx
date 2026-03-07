@@ -1,10 +1,11 @@
 "use client";
 
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { RequestLog } from "@/types";
 
-export function RecentActivity({ logs }: { logs: RequestLog[] }) {
+export function RecentActivity({ logs }: { logs: RequestLog[] }): React.JSX.Element {
   return (
     <Card>
       <CardHeader>

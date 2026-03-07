@@ -8,7 +8,7 @@ interface PendingAuth {
 const pending = new Map<string, PendingAuth>();
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-export function storePending(state: string, data: PendingAuth) {
+export function storePending(state: string, data: PendingAuth): void {
   pending.set(state, data);
   // Cleanup expired entries
   for (const [key, val] of pending) {

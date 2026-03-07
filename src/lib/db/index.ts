@@ -7,7 +7,7 @@ const DB_PATH = path.join(process.cwd(), "codex-flare.db");
 
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
-export function getDb() {
+export function getDb(): ReturnType<typeof drizzle<typeof schema>> {
   if (!_db) {
     const sqlite = new Database(DB_PATH);
     sqlite.pragma("journal_mode = WAL");

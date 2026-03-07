@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { requestLogs, accounts } from "@/lib/db/schema";
 import { sql, gte, eq } from "drizzle-orm";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const db = getDb();
   const url = new URL(req.url);
   const days = parseInt(url.searchParams.get("days") || "7");

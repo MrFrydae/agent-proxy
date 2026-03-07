@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { consumePending } from "@/lib/oauth/state-store";
 import { exchangeCodeForTokens } from "@/lib/oauth/tokens";
 import { getOAuthConfig } from "@/lib/oauth/config";
@@ -8,7 +9,7 @@ import { accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const { code: rawCode, state } = await req.json();
 
   if (!rawCode || !state) {

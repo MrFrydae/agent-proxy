@@ -5,7 +5,6 @@ import { decrypt, encrypt } from "@/lib/crypto";
 import { fetchAnthropicQuota } from "./anthropic";
 import { fetchOpenAIQuota } from "./openai";
 import { refreshAccessToken } from "@/lib/oauth/tokens";
-import type { Provider } from "@/types";
 
 const POLL_INTERVAL_MS = 15_000; // 15 seconds
 const CACHE_FRESHNESS_MS = 15_000; // Skip if polled within 15s
@@ -17,22 +16,22 @@ const backoffMap = new Map<string, { attempts: number; nextTryAt: number }>();
 
 let pollerInterval: ReturnType<typeof setInterval> | null = null;
 
-export function startQuotaPoller() {
+export function startQuotaPoller(): void {
   if (pollerInterval) return; // Already running
-  console.log("[quota-poller] Starting background quota polling");
+  console.warn("[quota-poller] Starting background quota polling");
   pollerInterval = setInterval(pollAllAccounts, POLL_INTERVAL_MS);
   // Initial poll after short delay
   setTimeout(pollAllAccounts, 5000);
 }
 
-export function stopQuotaPoller() {
+export function stopQuotaPoller(): void {
   if (pollerInterval) {
     clearInterval(pollerInterval);
     pollerInterval = null;
   }
 }
 
-async function pollAllAccounts() {
+async function pollAllAccounts(): Promise<void> {
   const db = getDb();
   const activeAccounts = db
     .select()
@@ -113,7 +112,7 @@ async function refreshOAuthToken(account: typeof accounts.$inferSelect): Promise
     .where(eq(accounts.id, account.id))
     .run();
 
-  console.log(`[quota-poller] Refreshed OAuth token for ${account.label}`);
+  console.warn(`[quota-poller] Refreshed OAuth token for ${account.label}`);
 }
 
 export async function refreshSingleAccount(accountId: string): Promise<void> {

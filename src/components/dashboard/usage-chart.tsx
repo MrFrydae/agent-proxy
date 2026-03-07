@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -9,7 +10,7 @@ interface DailyStat {
   tokens: number;
 }
 
-export function UsageChart({ data }: { data: DailyStat[] }) {
+export function UsageChart({ data }: { data: DailyStat[] }): React.JSX.Element {
   return (
     <Card>
       <CardHeader>
@@ -28,7 +29,7 @@ export function UsageChart({ data }: { data: DailyStat[] }) {
                 dataKey="date"
                 tick={{ fontSize: 12 }}
                 className="fill-muted-foreground"
-                tickFormatter={(v) => new Date(v + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                tickFormatter={(v) => new Date(`${v}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               />
               <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" />
               <Tooltip

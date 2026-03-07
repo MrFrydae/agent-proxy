@@ -1,8 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 
-export function Header({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+export function Header({
+  title, subtitle, action,
+}: { title: string; subtitle?: string; action?: ReactNode }): React.JSX.Element {
   return (
     <header className="flex items-start justify-between px-6 py-6 lg:px-8">
       <div>

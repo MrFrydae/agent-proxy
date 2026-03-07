@@ -60,7 +60,7 @@ export function getOrderedAccounts(provider: Provider): AccountWithKey[] {
   }));
 }
 
-export function markAccountRateLimited(accountId: string, resetSeconds?: number) {
+export function markAccountRateLimited(accountId: string, resetSeconds?: number): void {
   const db = getDb();
   const resetMs = (resetSeconds ?? 300) * 1000; // default 5 min
   const until = new Date(Date.now() + resetMs).toISOString();

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getOAuthConfig } from "@/lib/oauth/config";
 import { generateCodeVerifier, generateCodeChallenge } from "@/lib/oauth/pkce";
 import { storePending } from "@/lib/oauth/state-store";
@@ -9,7 +10,7 @@ function generateState(): string {
   return randomBytes(32).toString("hex");
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const { provider, label } = await req.json();
   if (!provider || !label) {
     return NextResponse.json({ error: "provider and label required" }, { status: 400 });

@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copy, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
-function CopyableUrl({ label, url }: { label: string; url: string }) {
+function CopyableUrl({ label, url }: { label: string; url: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
     await navigator.clipboard.writeText(url);
     setCopied(true);
     toast.success("Copied to clipboard");
@@ -33,7 +33,7 @@ function CopyableUrl({ label, url }: { label: string; url: string }) {
   );
 }
 
-export default function SettingsPage() {
+export default function SettingsPage(): React.JSX.Element {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
 
   return (
@@ -46,7 +46,8 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Point your API clients to these URLs instead of the provider&apos;s API. The proxy will inject your configured API key and handle failover automatically.
+              Point your API clients to these URLs instead of the provider&apos;s API.
+              The proxy will inject your configured API key and handle failover automatically.
             </p>
             <CopyableUrl
               label="Anthropic (Claude)"

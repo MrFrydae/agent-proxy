@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { GripVertical, Pencil, RefreshCw, Pause, Play, Trash2 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import type { AccountPublic } from "@/types";
 
@@ -45,11 +45,13 @@ function formatResetTime(isoDate: string | null): string {
   return `Resets ${new Date(isoDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} (local)`;
 }
 
-export function AccountCard({ account, onUpdate, onDelete, isReordering = false, isFirst = false, dragHandleProps }: AccountCardProps) {
+export function AccountCard({
+  account, onUpdate, onDelete, isReordering = false, isFirst = false, dragHandleProps,
+}: AccountCardProps): React.JSX.Element {
   const [renameOpen, setRenameOpen] = useState(false);
   const [newLabel, setNewLabel] = useState(account.label);
 
-  const handleRename = async () => {
+  const handleRename = async (): Promise<void> => {
     const trimmed = newLabel.trim();
     if (!trimmed || trimmed === account.label) {
       setRenameOpen(false);
@@ -70,7 +72,7 @@ export function AccountCard({ account, onUpdate, onDelete, isReordering = false,
     }
   };
 
-  const handleToggle = async () => {
+  const handleToggle = async (): Promise<void> => {
     await fetch(`/api/accounts/${account.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -79,14 +81,14 @@ export function AccountCard({ account, onUpdate, onDelete, isReordering = false,
     onUpdate();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     if (!confirm(`Delete account "${account.label}"?`)) return;
     await fetch(`/api/accounts/${account.id}`, { method: "DELETE" });
     toast.success("Account deleted");
     onDelete();
   };
 
-  const handleRefreshQuota = async () => {
+  const handleRefreshQuota = async (): Promise<void> => {
     try {
       const res = await fetch(`/api/quota/${account.id}/refresh`, { method: "POST" });
       if (!res.ok) throw new Error("Failed");
@@ -190,7 +192,7 @@ export function AccountCard({ account, onUpdate, onDelete, isReordering = false,
           <Input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleRename(); }}
+            onKeyDown={(e) => { if (e.key === "Enter") void handleRename(); }}
             placeholder="Account name"
           />
           <DialogFooter>
