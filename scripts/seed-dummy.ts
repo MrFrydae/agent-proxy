@@ -1,5 +1,5 @@
 // Seed a dummy second Anthropic account for testing drag-and-drop reorder
-// Run: npx tsx scripts/seed-dummy.ts
+// Run: pnpm exec tsx scripts/seed-dummy.ts
 
 import { getDb } from "../src/lib/db";
 import { accounts } from "../src/lib/db/schema";

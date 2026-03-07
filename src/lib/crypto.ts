@@ -3,7 +3,7 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypt
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
-const SALT = "codex-flare-salt-v1";
+const SALT = "intern-hopper-salt-v1";
 
 function getKey(): Buffer {
   const secret = process.env.ENCRYPTION_KEY;

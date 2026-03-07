@@ -37,7 +37,7 @@ test.describe("Settings Page", () => {
     await page.goto("/settings");
     await expect(page.getByText("System Status")).toBeVisible();
     await expect(page.getByText("Active (AES-256-GCM)")).toBeVisible();
-    await expect(page.getByText("codex-flare.db")).toBeVisible();
+    await expect(page.getByText("intern-hopper.db")).toBeVisible();
     await expect(page.getByText("Every ~15s")).toBeVisible();
   });
 

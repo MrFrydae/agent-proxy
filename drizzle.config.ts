@@ -5,6 +5,6 @@ export default {
   out: "./drizzle",
   dialect: "sqlite",
   dbCredentials: {
-    url: "./codex-flare.db",
+    url: "./intern-hopper.db",
   },
 } satisfies Config;

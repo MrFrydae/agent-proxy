@@ -151,8 +151,9 @@ web_modules/
 
 # TypeScript cache
 
-# Optional npm cache directory
+# Optional npm/pnpm cache directory
 .npm
+.pnpm-store
 
 # Optional eslint cache
 .eslintcache

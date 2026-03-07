@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "dev",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "port": 1455
     }
   ]
 }

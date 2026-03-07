@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 import path from "path";
 
-const DB_PATH = path.join(process.cwd(), "codex-flare.db");
+const DB_PATH = path.join(process.cwd(), "intern-hopper.db");
 
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 

@@ -37,17 +37,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
-        run: npm run lint
+        run: pnpm run lint
 
   type-check:
     name: Type Check (${{ matrix.os }})
@@ -67,17 +70,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: TypeScript type check
-        run: npx tsc --noEmit
+        run: pnpm exec tsc --noEmit
 
   security-audit:
     name: Security Audit (${{ matrix.os }})
@@ -97,21 +103,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: pnpm audit --prod --audit-level high
         continue-on-error: true
 
       - name: Audit all dependencies (critical only)
-        run: npm audit --audit-level=critical
+        run: pnpm audit --audit-level critical
 
   # ============================================================
   # STAGE 2: Build (depends on Stage 1, all OS/arch combos)
@@ -136,26 +145,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Restore Next.js build cache
         uses: actions/cache@v4
         with:
           path: .next/cache
-          key: nextjs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**/*') }}
+          key: nextjs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**/*') }}
           restore-keys: |
-            nextjs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}-
+            nextjs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}-
             nextjs-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Report bundle size
         shell: bash
@@ -206,14 +218,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browsers
         id: pw-cache
@@ -223,19 +238,19 @@ jobs:
             ~/.cache/ms-playwright
             ~/Library/Caches/ms-playwright
             ~/AppData/Local/ms-playwright
-          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright browser
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps ${{ matrix.browser }}
+        run: pnpm exec playwright install-deps ${{ matrix.browser }}
         continue-on-error: true
 
       - name: Run E2E tests
-        run: npx playwright test --project=${{ matrix.browser }}
+        run: pnpm exec playwright test --project=${{ matrix.browser }}
         env:
           CI: "true"
 

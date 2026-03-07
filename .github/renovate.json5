@@ -40,7 +40,7 @@
     automerge: false
   },
 
-  postUpdateOptions: ["npmDedupe"],
+  postUpdateOptions: ["pnpmDedupe"],
 
   packageRules: [
     //

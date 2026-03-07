@@ -34,7 +34,7 @@ function CopyableUrl({ label, url }: { label: string; url: string }): React.JSX.
 }
 
 export default function SettingsPage(): React.JSX.Element {
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:1455";
 
   return (
     <div>
@@ -71,7 +71,7 @@ export default function SettingsPage(): React.JSX.Element {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Database</span>
-              <span className="text-sm font-mono text-muted-foreground">codex-flare.db</span>
+              <span className="text-sm font-mono text-muted-foreground">intern-hopper.db</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Quota Polling</span>
