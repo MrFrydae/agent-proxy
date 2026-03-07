@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Codex Flare",
+  title: "Intern Hopper",
   description: "API Proxy with Failover for Claude & OpenAI",
 };
 

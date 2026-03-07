@@ -22,7 +22,7 @@ export function Sidebar() {
           <Flame className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold">Codex Flare</h1>
+          <h1 className="text-lg font-semibold">Intern Hopper</h1>
           <p className="text-xs text-muted-foreground">API Proxy with Failover</p>
         </div>
       </div>
